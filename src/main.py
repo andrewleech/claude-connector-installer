@@ -14,11 +14,16 @@ from _wstr import wstr, from_wstr_bytes
 
 kernel32 = ffi.open("kernel32.dll")
 user32 = ffi.open("user32.dll")
+shell32 = ffi.open("shell32.dll")
 GetModuleFileNameW = kernel32.func("I", "GetModuleFileNameW", "ppI")
 MessageBoxW = user32.func("i", "MessageBoxW", "pppI")
+SHChangeNotify = shell32.func("v", "SHChangeNotify", "iIpp")
 
 MB_ICONINFORMATION = 0x40
 MB_ICONERROR = 0x10
+
+SHCNE_ASSOCCHANGED = 0x08000000
+SHCNF_IDLIST = 0x0000
 
 STABLE_DIR = os.getenv("LOCALAPPDATA") + "\\ClaudeMcpbOpener"
 STABLE_EXE = STABLE_DIR + "\\claude-mcpb-opener.exe"
@@ -64,6 +69,11 @@ def self_install():
         '"{}" "%1"'.format(STABLE_EXE),
     )
     reg_set_string(PROG_ID + "\\DefaultIcon", None, "{},0".format(STABLE_EXE))
+
+    # Explorer caches file associations/icons per-process; without this it
+    # won't notice the new .mcpb association (or icon) until it restarts.
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0)
+
     message_box(
         "Claude MCPB Opener is installed and registered for .mcpb files.\n\n"
         "With Claude Desktop running, you can now double-click a .mcpb file "
