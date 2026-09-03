@@ -3,3 +3,4 @@ name = "claude-connector-installer"
 version = "0.1.0"
 entry = "src/main.py"
 icon = "assets/claude.ico"
+console = false

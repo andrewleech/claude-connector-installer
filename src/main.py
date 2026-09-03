@@ -10,15 +10,24 @@ import json
 import ffi
 import winreg
 
-from _wstr import from_wstr_bytes
+from _wstr import wstr, from_wstr_bytes
 
 kernel32 = ffi.open("kernel32.dll")
+user32 = ffi.open("user32.dll")
 GetModuleFileNameW = kernel32.func("I", "GetModuleFileNameW", "ppI")
+MessageBoxW = user32.func("i", "MessageBoxW", "pppI")
+
+MB_ICONINFORMATION = 0x40
+MB_ICONERROR = 0x10
 
 STABLE_DIR = os.getenv("LOCALAPPDATA") + "\\ClaudeMcpbOpener"
 STABLE_EXE = STABLE_DIR + "\\claude-mcpb-opener.exe"
 
 PROG_ID = "ClaudeMCPBFile"
+
+
+def message_box(text, icon=MB_ICONINFORMATION):
+    MessageBoxW(0, wstr(text), wstr("Claude MCPB Opener"), icon)
 
 
 def current_exe_path():
@@ -55,7 +64,11 @@ def self_install():
         '"{}" "%1"'.format(STABLE_EXE),
     )
     reg_set_string(PROG_ID + "\\DefaultIcon", None, "{},0".format(STABLE_EXE))
-    print("Registered .mcpb -> {}".format(STABLE_EXE))
+    message_box(
+        "Claude MCPB Opener is installed and registered for .mcpb files.\n\n"
+        "With Claude Desktop running, you can now double-click a .mcpb file "
+        "to install it as an extension."
+    )
 
 
 _FIND_CLAUDE_PS = (
@@ -104,7 +117,11 @@ def find_claude_exe():
 def launch(mcpb_path):
     exe = find_claude_exe()
     if not exe:
-        print("claude.exe not found (not running, and no AppX package matched)")
+        message_box(
+            "Couldn't find Claude Desktop. Make sure it's installed, then try "
+            "opening this file again.",
+            icon=MB_ICONERROR,
+        )
         return 1
     os.spawnv(os.P_NOWAIT, exe, [exe, mcpb_path])
     return 0
