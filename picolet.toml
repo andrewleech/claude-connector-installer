@@ -5,5 +5,5 @@ entry = "src/main.py"
 icon = "assets/claude.ico"
 console = false
 company_name = "Planet Innovation"
-file_description = "Registers and launches Claude Desktop for .mcpb files"
+file_description = "Claude MCPB Opener"
 product_name = "Claude MCPB Opener"
