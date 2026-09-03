@@ -1,6 +1,9 @@
 [app]
 name = "claude-connector-installer"
-version = "0.1.0"
+version = "git"
 entry = "src/main.py"
 icon = "assets/claude.ico"
 console = false
+company_name = "Planet Innovation"
+file_description = "Registers and launches Claude Desktop for .mcpb files"
+product_name = "Claude MCPB Opener"
