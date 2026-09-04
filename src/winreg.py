@@ -11,19 +11,11 @@ are plain OSError(win32_error_code).
 
 import array
 import struct
-import ffi
 
 from _wstr import wstr, from_wstr_bytes, wstr_multi, from_wstr_multi
+from _dll import open_dll
 
-
-def _dll(name):
-    try:
-        return ffi.open(name)
-    except OSError as e:
-        raise ImportError("failed to open {!r}: {}".format(name, e))
-
-
-_advapi32 = _dll("advapi32.dll")
+_advapi32 = open_dll("advapi32.dll")
 
 # LSTATUS RegCreateKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved,
 #   LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired,
