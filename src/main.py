@@ -11,6 +11,7 @@ import ffi
 import winreg
 
 from _wstr import wstr, from_wstr_bytes
+from _fileversion import product_version, version_key
 
 kernel32 = ffi.open("kernel32.dll")
 user32 = ffi.open("user32.dll")
@@ -21,6 +22,9 @@ SHChangeNotify = shell32.func("v", "SHChangeNotify", "iIpp")
 
 MB_ICONINFORMATION = 0x40
 MB_ICONERROR = 0x10
+MB_ICONWARNING = 0x30
+MB_YESNO = 0x04
+IDYES = 6
 
 SHCNE_ASSOCCHANGED = 0x08000000
 SHCNF_IDLIST = 0x0000
@@ -32,7 +36,7 @@ PROG_ID = "ClaudeMCPBFile"
 
 
 def message_box(text, icon=MB_ICONINFORMATION):
-    MessageBoxW(0, wstr(text), wstr("Claude MCPB Opener"), icon)
+    return MessageBoxW(0, wstr(text), wstr("Claude MCPB Opener"), icon)
 
 
 def current_exe_path():
@@ -50,6 +54,20 @@ def reg_set_string(subkey, value_name, value):
         winreg.CloseKey(key)
 
 
+def is_downgrade(src):
+    """True if the already-installed exe is newer than `src`."""
+    try:
+        installed = product_version(STABLE_EXE)
+        new = product_version(src)
+    except Exception:
+        return False  # can't tell: don't block the install
+    installed_key = version_key(installed) if installed else None
+    new_key = version_key(new) if new else None
+    if installed_key is None or new_key is None:
+        return False
+    return new_key < installed_key
+
+
 def self_install():
     src = current_exe_path()
     if src.lower() != STABLE_EXE.lower():
@@ -57,10 +75,22 @@ def self_install():
             os.mkdir(STABLE_DIR)
         except OSError:
             pass  # already exists
-        with open(src, "rb") as f:
-            data = f.read()
-        with open(STABLE_EXE, "wb") as f:
-            f.write(data)
+        copy = True
+        if is_downgrade(src):
+            copy = message_box(
+                "A newer version is already installed:\n\n"
+                "    installed: {}\n"
+                "    this exe:  {}\n\n"
+                "Replace it with this older version?".format(
+                    product_version(STABLE_EXE), product_version(src)
+                ),
+                MB_YESNO | MB_ICONWARNING,
+            ) == IDYES
+        if copy:
+            with open(src, "rb") as f:
+                data = f.read()
+            with open(STABLE_EXE, "wb") as f:
+                f.write(data)
 
     reg_set_string(".mcpb", None, PROG_ID)
     reg_set_string(
