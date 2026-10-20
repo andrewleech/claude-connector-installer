@@ -18,6 +18,8 @@ jobs:
           fetch-depth: 0
 
       - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
 
       # The PyPI release predates the [app] version/icon/console options.
       - name: Install picolet and mpy-cross
